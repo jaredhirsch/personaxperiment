@@ -10,6 +10,7 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 </head>
 <body data-appy-state="initializing">
+email: <input type="text" class="username"> <span class="error" style="display:none; color: red; font-weight: bold">email is required</span>
 <div class="btn login disabled">log in</div>
 <p>status: <span class="user-status">initializing</span>
 <script>
@@ -17,9 +18,14 @@
 // possible app states: 'initializing', 'loggedOut', 'loggingIn', 'loggedIn'
 
 $(document).ready(function() {
-    $(document).on('stateChanged', function(e, newState) {
+    $(document).on('stateChanged', function(e, o) {
+        var newState = o.state,
+            currentUser = o.user;
+
         $('body').data('appy-state', newState);
-        localStorage.setItem('appy-state', newState)
+        $('body').data('appy-user', currentUser);
+        localStorage.setItem('appy-state', newState);
+        localStorage.setItem('appy-user', currentUser);
 
         $('.btn.login')
             .removeClass('loggedOut loggingIn loggedIn initializing disabled')
@@ -28,26 +34,45 @@ $(document).ready(function() {
         if (newState == 'loggingIn') {
             $('.btn.login').addClass('disabled');
             // to simulate server action, just set a timer
-            setTimeout(function() { $(document).trigger('stateChanged', 'loggedIn') }, 500);
+            setTimeout(function() { 
+                $(document).trigger('stateChanged', {user: o.user, state: 'loggedIn'});
+            }, 500);
         }
 
         // ex: loggedOut --> "logged out"
         var stateText = newState.replace(/[A-Z]/, function(a,x,y) { return a.replace(a, ' '+y[x].toLowerCase()) });
+        if (newState == 'loggedIn' || newState == 'loggingIn') { stateText += ' as ' + currentUser; }
+
         $('.user-status').text(stateText);
 
-        if (newState == 'loggedIn') { $('.btn.login').text('log out') }
-        if (newState == 'loggedOut') { $('.btn.login').text('log in') }
+        if (newState == 'loggedIn') {
+            $('.btn.login').text('log out');
+            $('.username').val('');
+            $('.error').hide();
+        }
+        if (newState == 'loggedOut') { $('.btn.login').text('log in'); }
     });
 
     $(document).on('click', '.btn.login', function(e) { 
         if ($(this).hasClass('disabled')) { return; }
         var appyState = $('body').data('appy-state');
-        if (appyState == 'loggedOut') { $(this).trigger('stateChanged', 'loggingIn'); } 
-        if (appyState == 'loggedIn') { $(this).trigger('stateChanged', 'loggedOut'); }
+        var user = $('.username').val();
+        if (appyState == 'loggedOut') { 
+            if (!user) { 
+                $('.error').show();
+            } else {
+                $('.error').hide()
+                $(this).trigger('stateChanged', {user: user, state: 'loggingIn'});
+            }
+        }
+        if (appyState == 'loggedIn') { $(this).trigger('stateChanged', {state: 'loggedOut'}); }
     });
 
     // on init, fetch the last known state from localStorage
-    var cachedState = localStorage.getItem('appy-state') || 'loggedOut';
+    var cachedState = {
+        state: localStorage.getItem('appy-state') || 'loggedOut',
+        user: localStorage.getItem('appy-user')
+    };
     console.log(cachedState);
     $(document).trigger('stateChanged', cachedState); 
 
