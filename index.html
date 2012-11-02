@@ -36,7 +36,8 @@ $(document).ready(function() {
             $('.btn.login').addClass('disabled');
             // to simulate server action, just set a timer
             setTimeout(function() { 
-                $(document).trigger('stateChanged', {user: o.user, state: 'loggedIn'});
+                navigator.id.request();
+                // $(document).trigger('stateChanged', {user: o.user, state: 'loggedIn'});
             }, 500);
         }
 
@@ -66,7 +67,10 @@ $(document).ready(function() {
                 $(this).trigger('stateChanged', {user: user, state: 'loggingIn'});
             }
         }
-        if (appyState == 'loggedIn') { $(this).trigger('stateChanged', {state: 'loggedOut'}); }
+        if (appyState == 'loggedIn') {
+            navigator.id.logout();
+            // $(this).trigger('stateChanged', {state: 'loggedOut'});
+        }
     });
 
     // on init, fetch the last known state from localStorage
