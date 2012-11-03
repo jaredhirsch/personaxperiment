@@ -55,7 +55,7 @@ $(document).ready(function() {
         if (newState == 'loggedOut') { $('.btn.login').text('log in'); }
     });
 
-    $(document).on('click', '.btn.login', function(e) { 
+    $(document).on('click', '.btn.login', function(e) {
         if ($(this).hasClass('disabled')) { return; }
         var appyState = $('body').data('appy-state');
         var user = $('.username').val();
@@ -81,6 +81,18 @@ $(document).ready(function() {
     console.log(cachedState);
     $(document).trigger('stateChanged', cachedState); 
 
+    navigator.id.watch({
+        loggedInUser: $('body').data('appy-user'), // may be null or undefined. interesting fun lurks here :-)
+        // TODO: get username from the assertion, not the UI.
+        onlogin: function(assertion)  {
+            console.log('onlogin fired')
+            $(document).trigger('stateChanged', {user: $('.username').val(), state: 'loggedIn'});
+        },
+        onlogout: function() {
+            console.log('onlogout fired')
+            $(document).trigger('stateChanged', {state: 'loggedOut'});
+        }
+    });
 });
 </script>
 </body>
